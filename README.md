@@ -1,6 +1,6 @@
-# Mini Slack Clone (FastAPI + WebSocket)
+# Mini Messenger (FastAPI + WebSocket)
 
-A minimal Slack-like chat app built with FastAPI WebSockets.
+A minimal chat app built with FastAPI WebSockets.
 
 ## Features
 - Real-time messaging
