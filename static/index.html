@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mini Slack</title>
+</head>
+<body>
+    <h2>Mini Slack Chat</h2>
+
+    <div id="chatlog" style="width: 60ch; height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;"></div>
+
+    <input id="username" placeholder="Username" /><br/>
+    <input id="message" type="text" placeholder="Type message..."/>
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        const socketUrl = "ws://" + window.location.host + "/ws";
+        logWithTime(`🔗 Connecting to WebSocket at ${socketUrl}`);
+        const socket = new WebSocket(socketUrl);
+        const log = document.getElementById("chatlog");
+
+        socket.onopen = function () {
+            logWithTime("✅ WebSocket connection established");
+        };
+
+        socket.onclose = function () {
+            logWithTime("🔌 WebSocket connection closed");
+        };
+
+        socket.onerror = function (err) {
+            logWithTime("❗ WebSocket error:", err);
+        };
+
+        socket.onmessage = function(event) {
+            logWithTime("📨 Message received: " + event.data);
+            const text = event.data;
+            const timeMatch = text.match(/^\[(.*?)\]\s(.*?):\s(.*)/);
+
+            if (timeMatch) {
+                const [, time, user, message] = timeMatch;
+                const color = hashColor(user);
+
+                const line = document.createElement("div");
+                line.innerHTML = `<span style="color:gray">[${time}]</span> <strong style="color:${color}">${user}:</strong> ${message}`;
+                log.appendChild(line);
+                log.scrollTop = log.scrollHeight;
+            }
+        };
+
+        function hashColor(name) {
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const color = '#' + ((hash >> 24) & 0xFF).toString(16).padStart(2, '0') +
+                                ((hash >> 16) & 0xFF).toString(16).padStart(2, '0') +
+                                ((hash >> 8) & 0xFF).toString(16).padStart(2, '0');
+            return color;
+        }
+
+        function sendMessage() {
+            const user = document.getElementById("username").value.trim() || "Anonymous";
+            const input = document.getElementById("message");
+            const message = input.value.trim();
+            if (message !== "") {
+                const formattedMessage = user + ": " + message;
+                logWithTime("📤 Sending message: " + formattedMessage);
+                socket.send(formattedMessage);
+                input.value = "";
+            }
+        }
+
+        function logWithTime(...args) {
+            const now = new Date().toLocaleTimeString();
+            console.log(`[${now}]`, ...args);
+        }
+    </script>
+</body>
+</html>
